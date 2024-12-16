@@ -1,0 +1,25 @@
+{
+  "requestPermissions": [
+    {
+      "name": "ohos.permission.CAMERA",
+      "reason": "测试",
+      "usedScene": {
+        "when": "inuse"
+      }
+    },
+    {
+      "name": "ohos.permission.LOCATION",
+      "reason": "测试",
+      "usedScene": {
+        "when": "inuse"
+      }
+    },
+    {
+      "name": "ohos.permission.APPROXIMATELY_LOCATION",
+      "reason": "测试",
+      "usedScene": {
+        "when": "inuse"
+      }
+    }
+  ]
+}

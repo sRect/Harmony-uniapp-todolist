@@ -1,0 +1,119 @@
+import { camera, cameraPicker as picker } from '@kit.CameraKit';
+import { fileIo, fileUri } from '@kit.CoreFileKit';
+import { BusinessError } from '@kit.BasicServicesKit';
+// import { hilog } from '@kit.PerformanceAnalysisKit';
+// import fs from '@ohos.file.fs';
+// import buffer from '@ohos.buffer';
+import util from '@ohos.util'; // 导入工具函数，可能用于Base64编码
+import { image } from '@kit.ImageKit'; // 导入图像处理功能
+import {OpenCameraOptions, OpenCameraSuccess, OpenCameraFail} from "../interface.uts";
+
+export {
+  OpenCameraOptions,
+  OpenCameraSuccess,
+  OpenCameraFail
+}
+
+// https://developer.huawei.com/consumer/cn/doc/harmonyos-guides-V5/camera-picker-V5
+// 应用可调用CameraPicker拍摄照片或录制视频，无需申请相机权限。
+// CameraPicker的相机交互界面由系统提供，在用户点击拍摄和确认按钮后，调用CameraPicker的应用获取对应的照片或者视频。
+// 应用开发者如果只是需要获取即时拍摄的照片或者视频，则可以使用CameraPicker能力来轻松实现。
+// 由于照片的拍摄和确认都是由用户进行主动确认，因此应用开发者可以不用申请操作相机的相关权限。
+
+// 在应用调试时，开发者需在release模式下调用系统相机（CameraPicker）。
+
+// 由于系统限制了debug模式下不允许调试release应用，在debug模式下调用系统相机，将导致异常。
+
+export async function openCamera(options : OpenCameraOptions) {
+  try {
+    // function imageToBase64(filePath: string, bufferLen = 4096) {
+    //   try {
+    //     const file = fileIo.openSync(filePath, fileIo.OpenMode.READ_WRITE);
+    //     const arrayBuffer = new ArrayBuffer(bufferLen);
+    //     const readLen = fileIo.readSync(file.fd, arrayBuffer);
+    //     const buf = buffer.from(arrayBuffer, 0, readLen);
+    //     const base64 = buf.toString('base64');
+    //     fileIo.closeSync(file);
+    //     return base64;
+    //   } catch (e) {
+    //     console.error('file err:', JSON.stringify(e));
+    //     return '';
+    //   }
+    // }
+
+    /**
+     * 图片Uri转ArrayBuff
+     * @param uri
+     * @returns
+     */
+    function ImageUri2Buffer(uri: string){
+      let file = fileIo.openSync(uri, fileIo.OpenMode.READ_WRITE);
+      let buffer = new ArrayBuffer(4096);
+      fileIo.readSync(file.fd, buffer);
+      return buffer ;
+    }
+
+    /**
+     * ArrayBuffer转Base64
+     * @param buffer
+     * @returns
+     */
+    function arrayBuffer2Base64(buffer: ArrayBuffer){
+      let temp = new Uint8Array(buffer);
+      // 官方提供的base64编码转换工具
+      let helper = new util.Base64Helper();
+      let res = helper.encodeToStringSync(temp);
+      return res;
+    }
+
+
+    let imgSrc: string = '';
+    let videoSrc: string = '';
+
+    let pathDir = getContext().filesDir;
+    let fileName = `${new Date().getTime()}`
+    let filePath = pathDir + `/${fileName}.tmp`
+    fileIo.createRandomAccessFileSync(filePath, fileIo.OpenMode.CREATE);
+
+    let uri = fileUri.getUriFromPath(filePath);
+    let pickerProfile: picker.PickerProfile = {
+      cameraPosition: camera.CameraPosition.CAMERA_POSITION_BACK,
+      saveUri: uri
+    };
+    let result: picker.PickerResult =
+      await picker.pick(getContext(), [picker.PickerMediaType.PHOTO, picker.PickerMediaType.VIDEO],
+        pickerProfile);
+
+    console.log("result:", result);
+    console.info(`picker resultCode: ${result.resultCode},resultUri: ${result.resultUri},mediaType: ${result.mediaType}`);
+
+    if (result.resultCode == 0) {
+      if (result.mediaType === picker.PickerMediaType.PHOTO) {
+        // imgSrc = result.resultUri;
+        if(result.resultUri) {
+          const arraybuffer = ImageUri2Buffer(result.resultUri);
+          const imgbase64 = arrayBuffer2Base64(arraybuffer);
+
+          // const imgbase64 = await imageToBase64(result.resultUri);
+          imgSrc = imgbase64;
+        }
+
+      } else {
+        videoSrc = result.resultUri;
+      }
+    }
+
+    let obj: OpenCameraSuccess = {
+      imgSrc,
+      videoSrc,
+    }
+
+    options?.success?.(obj);
+  } catch (error) {
+    let result : OpenCameraFail = {
+      errMsg: error.message ?? ""
+    };
+
+    options?.fail?.(result);
+  }
+}

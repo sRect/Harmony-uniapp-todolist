@@ -1,0 +1,52 @@
+export interface Uni {
+	/**
+		* OpenCamera()
+		* @description
+		* 打开相机
+		* @param {OpenCameraOptions}  options
+		* @return {void}
+		* @example
+		 ```typescript
+			uni.OpenCamera({});
+		 ```
+		*/
+	openCamera(options : OpenCameraOptions) : void;
+}
+
+export type OpenCamera = (options : OpenCameraOptions) => void;
+export type OpenCameraSuccess = {
+  [key:string]: string
+};
+export type OpenCameraSuccessCallback = (result : OpenCameraSuccess) => void;
+export type OpenCameraFail = {
+	/**
+	 * 错误信息
+	 */
+	errMsg : string
+};
+export type OpenCameraFailCallback = (result : OpenCameraFail) => void;
+export type OpenCameraComplete = {
+	/**
+	 * 错误信息
+	 */
+	errMsg : string
+};
+export type OpenCameraCompleteCallback = (result : OpenCameraComplete) => void;
+
+export type OpenCameraOptions = {
+	/**
+	 * 接口调用成功的回调函数
+	 * @defaultValue null
+	 */
+	success ?: OpenCameraSuccessCallback | null,
+	/**
+	 * 接口调用失败的回调函数
+	 * @defaultValue null
+	 */
+	fail ?: OpenCameraFailCallback | null,
+	/**
+	 * 接口调用结束的回调函数（调用成功、失败都会执行）
+	 * @defaultValue null
+	 */
+	complete ?: OpenCameraCompleteCallback | null
+};
